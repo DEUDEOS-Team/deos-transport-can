@@ -10,7 +10,7 @@ LOG_MODULE_REGISTER(deos_can_trp, LOG_LEVEL_INF);
 
 #define DEOS_CAN_TX_QUEUE_SIZE 16
 #define DEOS_CAN_RX_QUEUE_SIZE 16
-#define DEOS_CAN_THREAD_STACK_SIZE 1024
+#define DEOS_CAN_THREAD_STACK_SIZE 2048
 #define DEOS_CAN_THREAD_PRIORITY 5
 #define DEOS_CAN_MAX_RX_FILTERS 8
 
@@ -244,6 +244,7 @@ int deos_can_transport_start(void)
         NULL, NULL, NULL,
         DEOS_CAN_THREAD_PRIORITY,
         0, K_NO_WAIT);
+    k_thread_name_set(&can_rx_thread_data, "can_rx");
 
     k_thread_create(
         &can_tx_thread_data,
@@ -253,6 +254,7 @@ int deos_can_transport_start(void)
         NULL, NULL, NULL,
         DEOS_CAN_THREAD_PRIORITY,
         0, K_NO_WAIT);
+    k_thread_name_set(&can_tx_thread_data, "can_tx");
 
     m_is_started = true;
     LOG_INF("DEOS CAN-FD Transport started");
