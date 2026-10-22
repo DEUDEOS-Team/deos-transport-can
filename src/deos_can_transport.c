@@ -6,7 +6,7 @@
 #include <zephyr/sys/atomic.h>
 #include <errno.h>
 
-LOG_MODULE_REGISTER(deos_can_trp, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(deos_can_trp, LOG_LEVEL_DBG);
 
 #define DEOS_CAN_TX_QUEUE_SIZE 16
 #define DEOS_CAN_RX_QUEUE_SIZE 16
@@ -61,6 +61,7 @@ static void can_rx_thread_func(void *p1, void *p2, void *p3)
         }
 
         if (k_msgq_get(&can_rx_msgq, &frame, K_FOREVER) == 0) {
+            LOG_INF("CAN RX Frame: ID 0x%08X (Flags: 0x%02X, DLC: %d)", frame.id, frame.flags, frame.dlc);
             int ret = deos_can_decode_frame(&frame, &msg);
             if (ret != 0) {
                 LOG_WRN("Failed to decode CAN frame: %d", ret);
@@ -91,10 +92,10 @@ static void can_tx_thread_func(void *p1, void *p2, void *p3)
                 if (deos_can_encode_frame(&msg, &frame) == 0) {
                     int ret = can_send(m_can_dev, &frame, K_MSEC(100), NULL, NULL);
                     if (ret != 0) {
-                        LOG_ERR("CAN send failed: %d", ret);
+                        LOG_ERR("CAN send failed: %d (ID: 0x%08X)", ret, frame.id);
                         deos_fault_raise(DEOS_FAULT_CAN_TX_SEND_FAILED, DEOS_FAULT_SEVERITY_WARNING);
                     } else {
-                        LOG_DBG("CAN Sent MSG (Cmd: 0x%02X) Seq: %u", msg.command, msg.sequence);
+                        LOG_INF("CAN TX Success: ID 0x%08X | Cmd: 0x%02X | Seq: %u", frame.id, msg.command, msg.sequence);
                     }
                 }
             }
